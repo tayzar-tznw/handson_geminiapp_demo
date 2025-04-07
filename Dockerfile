@@ -24,4 +24,4 @@ EXPOSE ${PORT}
 # アプリケーションを実行するコマンド
 # Cloud Run では 0.0.0.0 でリッスンし、PORT 環境変数を尊重する必要がある
 # WebSocket の問題を回避するため --server.enableCORS false を含める
-CMD ["streamlit", "run", "app.py", "--server.port=${PORT}", "--server.address=0.0.0.0", "--server.enableCORS=false"]
+CMD streamlit run app.py --server.port=${PORT} --server.address=0.0.0.0 --server.enableCORS=false
