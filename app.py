@@ -1,4 +1,8 @@
 # app.py
+import vertexai
+from vertexai.generative_models import GenerativeModel, Part, FinishReason
+import vertexai.preview.generative_models as generative_models
+import datetime # Firestore のタイムスタンプ用
 import streamlit as st
 from google.cloud import storage
 import os
@@ -11,6 +15,23 @@ import uuid # 一意なファイル名生成のため
 PROJECT_ID = "gossy-workstations" # あなたのプロジェクト ID に置き換えてください
 # GCS バケット名を設定
 BUCKET_NAME = "gossy-gemini-handson" # 作成したバケット名に置き換えてください
+# Vertex AI Location を設定
+VERTEX_AI_LOCATION = os.getenv("VERTEX_AI_LOCATION", "us-central1") # デフォルトを設定
+
+# --- Vertex AI / Firestore クライアントの初期化 ---
+try:
+    # Vertex AI 初期化
+    vertexai.init(project=PROJECT_ID, location=VERTEX_AI_LOCATION)
+    # Gemini モデル選択 (例: gemini-1.5-flash)
+    model = GenerativeModel("gemini-2.0-flash-001")
+
+    # Firestore Client (次のステップで使うがここで初期化)
+    from google.cloud import firestore
+    db = firestore.Client(project=PROJECT_ID)
+
+except Exception as e:
+    st.error(f"Vertex AI または Firestore クライアントの初期化に失敗: {e}")
+    st.stop()
 
 # --- GCS クライアントの初期化 ---
 # Cloud Workstations や Cloud Run (サービスアカウント指定時) では通常、
@@ -24,31 +45,114 @@ except Exception as e:
     st.stop() # エラーが発生したらアプリを停止
 
 # --- Streamlit アプリケーション ---
-st.title("ヤマハバイク判定アプリ (v0.2)")
+st.title("バイク判定アプリ (v0.2)")
 st.header("バイク画像をアップロード")
 
-uploaded_file = st.file_uploader("ヤマハバイクの画像を選択してください...", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("バイクの画像を選択してください...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # アップロードされたファイルの内容を表示（任意）
-    st.image(uploaded_file, caption='アップロードされた画像', use_column_width=True)
+    st.image(uploaded_file, caption='アップロードされた画像', use_container_width=True)
     st.write("")
 
-    # GCS にアップロードするボタン
-    if st.button("画像を GCS にアップロード"):
-        try:
-            # ファイル名を一意にする (例: UUID + 元の拡張子)
-            file_extension = os.path.splitext(uploaded_file.name)[1]
-            destination_blob_name = f"uploads/{uuid.uuid4()}{file_extension}"
+    # ボタンを押したら、アップロード、Gemini解析、Firestore保存を一連で行う
+    if st.button("画像をアップロードして解析"):
+        gcs_uri = None
+        gemini_result_text = "解析エラー"
+        identified_model = "不明"
+        status = "Error"
+        upload_timestamp = firestore.SERVER_TIMESTAMP # Firestore サーバータイムスタンプを使用
 
-            # GCS にファイルをアップロード
+        try:
+            # 1. GCS へのアップロード
+            st.info("GCS に画像をアップロード中...")
+            file_extension = os.path.splitext(uploaded_file.name)[1]
+            # uploaded_file.type からより正確な mime type を取得できる場合がある
+            mime_type = uploaded_file.type
+            destination_blob_name = f"uploads/{uuid.uuid4()}{file_extension}"
             blob = bucket.blob(destination_blob_name)
 
-            # Streamlit の UploadedFile はファイルライクオブジェクトなのでそのまま渡せる
-            blob.upload_from_file(uploaded_file)
+            # アップロード (一時ファイルやメモリから効率的に)
+            uploaded_file.seek(0) # Streamlit UploadedFile ポインタを先頭に戻す
+            blob.upload_from_file(uploaded_file, content_type=mime_type)
+            gcs_uri = f"gs://{BUCKET_NAME}/{destination_blob_name}"
+            st.success(f"GCS アップロード完了: {gcs_uri}")
 
-            st.success(f"画像が GCS にアップロードされました: gs://{BUCKET_NAME}/{destination_blob_name}")
-            st.session_state.gcs_file_path = f"gs://{BUCKET_NAME}/{destination_blob_name}" # 後続ステップのためにパスを保持
+            # 2. Gemini API で解析
+            st.info("Gemini でバイクの型式を解析中...")
+            image_part = Part.from_uri(gcs_uri, mime_type=mime_type)
+            prompt = """
+            この画像に写っているバイクのメーカー、型式名を特定してください。
+            バイク以外、または型式が不明な場合は、その旨を記載してください。
+            回答はメーカーと型式名のみ、または不明である旨のみを簡潔に記述してください。
+            例: ヤマハ　YZF-R1, ヤマハ　VMAX, ヤマハ SR400, 不明, バイクではない
+            """
+
+            generation_config = generative_models.GenerationConfig(
+                temperature=0.2, # より決定的な回答を促す
+                max_output_tokens=100
+            )
+            safety_settings = {
+                generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            }
+
+            response = model.generate_content(
+                [image_part, prompt],
+                generation_config=generation_config,
+                safety_settings=safety_settings,
+                stream=False, # ストリームしない場合は False
+            )
+
+            if response.candidates and response.candidates[0].content.parts:
+                gemini_result_text = response.text.strip()
+                # 簡単なパース（必要に応じて改善）
+                if "不明" not in gemini_result_text and "ではない" not in gemini_result_text:
+                     identified_model = gemini_result_text
+                     status = "Success"
+                else:
+                     identified_model = gemini_result_text # モデルの回答をそのまま入れる
+                     status = "Identification failed"
+            else:
+                # 理由を表示 (例: 安全性フィルターによるブロック)
+                try:
+                    block_reason = response.candidates[0].finish_reason
+                    safety_ratings = response.candidates[0].safety_ratings
+                    gemini_result_text = f"Gemini 解析失敗 (理由: {block_reason}, Safety Ratings: {safety_ratings})"
+                except Exception:
+                     gemini_result_text = "Gemini 解析失敗 (空の応答)"
+                status = "Gemini API Error"
+
+
+            st.subheader("Gemini 解析結果:")
+            st.write(gemini_result_text)
+
 
         except Exception as e:
-            st.error(f"GCS へのアップロード中にエラーが発生しました: {e}")
+            st.error(f"処理中にエラーが発生しました: {e}")
+            status = "Processing Error"
+            gemini_result_text = str(e) # エラーメッセージを記録
+
+        # --- ここからステップ 4, 5, 6 ---
+        # 3. Firestore に履歴を書き込む (次のセクションで実装)
+        finally: # エラーが発生しても記録を試みる
+             if gcs_uri: # GCS URI がないと記録の意味がないため
+                try:
+                    st.info("解析履歴を Firestore に保存中...")
+                    doc_ref = db.collection("bike_analyze_history").document() # コレクション名を指定
+                    data_to_save = {
+                        "timestamp": upload_timestamp,
+                        "gcs_uri": gcs_uri,
+                        "original_filename": uploaded_file.name,
+                        "content_type": mime_type,
+                        "gemini_model_used": "gemini-2.0-flash-001", # 使用モデルを記録
+                        "gemini_result_text": gemini_result_text,
+                        "identified_model": identified_model,
+                        "status": status,
+                         # 必要であればユーザー情報なども追加
+                    }
+                    doc_ref.set(data_to_save)
+                    st.success(f"Firestore に履歴を保存しました (Document ID: {doc_ref.id})")
+                except Exception as e:
+                    st.error(f"Firestore への保存中にエラーが発生しました: {e}")
