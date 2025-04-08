@@ -5,8 +5,21 @@ import vertexai.preview.generative_models as generative_models
 import datetime # Firestore のタイムスタンプ用
 import streamlit as st
 from google.cloud import storage
+from google.cloud.exceptions import NotFound # オブジェクトが見つからない場合のエラー処理用
 import os
 import uuid # 一意なファイル名生成のため
+
+# タイムゾーン変換用 (必要に応じて)
+try:
+    # Python 3.9+
+    from zoneinfo import ZoneInfo
+except ImportError:
+    # Python 3.8以前 (pytz をインストールした場合)
+    try:
+        import pytz
+        ZoneInfo = pytz.timezone # pytz を ZoneInfo として使うための簡易的な対応
+    except ImportError:
+        ZoneInfo = None # タイムゾーン処理不可
 
 # --- 設定 ---
 # Google Cloud プロジェクト ID を環境変数から取得（推奨）
@@ -156,3 +169,72 @@ if uploaded_file is not None:
                     st.success(f"Firestore に履歴を保存しました (Document ID: {doc_ref.id})")
                 except Exception as e:
                     st.error(f"Firestore への保存中にエラーが発生しました: {e}")
+
+# --- 解析履歴表示セクション ---
+st.divider()
+st.subheader("解析履歴 (直近10件)")
+
+try:
+    history_ref = db.collection("bike_analyze_history")
+    docs = history_ref.order_by(
+        "timestamp", direction=firestore.Query.DESCENDING
+    ).limit(10).stream()
+    history_list = list(docs)
+
+    if not history_list:
+        st.info("まだ解析履歴はありません。")
+    else:
+        jst = ZoneInfo('Asia/Tokyo') if ZoneInfo else None # タイムゾーンオブジェクト準備
+
+        for doc in history_list:
+            history_data = doc.to_dict()
+
+            # タイムスタンプの取得とフォーマット
+            timestamp_utc = history_data.get('timestamp')
+            display_time = "時刻不明"
+            if timestamp_utc and jst: # jstが取得できている場合のみ変換試行
+                 try:
+                     timestamp_jst = timestamp_utc.astimezone(jst)
+                     display_time = timestamp_jst.strftime('%Y-%m-%d %H:%M:%S %Z')
+                 except Exception as time_e:
+                     display_time = f"時刻フォーマットエラー: {time_e}"
+            elif timestamp_utc: # タイムゾーン情報なしならUTCで表示
+                 display_time = timestamp_utc.strftime('%Y-%m-%d %H:%M:%S UTC')
+
+            expander_title = f"{display_time} - {history_data.get('original_filename', 'ファイル名不明')}"
+            with st.expander(expander_title):
+
+                # --- 画像のダウンロードと表示 ---
+                gcs_uri = history_data.get('gcs_uri')
+                if gcs_uri and gcs_uri.startswith("gs://"):
+                    try:
+                        # storage_client は GCSアップロード用に初期化されたものを使用
+                        blob = storage.Blob.from_string(gcs_uri, client=storage_client)
+                        # 画像データをバイトとしてダウンロード (タイムアウトを設定)
+                        image_bytes = blob.download_as_bytes(timeout=60)
+                        # Streamlit で画像を表示 (幅を指定)
+                        st.image(image_bytes,
+                                 caption=f"画像: {history_data.get('original_filename', '')}",
+                                 width=300) # 表示幅を適宜調整
+                    except NotFound:
+                        st.warning(f"GCSから画像が見つかりませんでした: {gcs_uri}")
+                    except Exception as img_e:
+                        st.warning(f"GCSからの画像の読み込み/表示中にエラー: {img_e}")
+                elif gcs_uri:
+                     st.warning(f"無効なGCS URIです: {gcs_uri}")
+                # --- 画像表示終了 ---
+
+                # その他の情報を表示
+                st.text(f"ステータス: {history_data.get('status', 'N/A')}")
+                st.text(f"判定された型式: {history_data.get('identified_model', 'N/A')}")
+                st.text(f"Gemini 結果詳細: {history_data.get('gemini_result_text', 'N/A')}")
+                gcs_link = history_data.get('gcs_uri', '#')
+                # GCS URI リンクも引き続き表示
+                st.markdown(f"GCS URI: [{gcs_link}]({gcs_link.replace('gs://', 'https://storage.cloud.google.com/')})")
+                st.text(f"コンテンツタイプ: {history_data.get('content_type', 'N/A')}")
+                st.text(f"使用モデル: {history_data.get('gemini_model_used', 'N/A')}")
+                st.text(f"Firestore Doc ID: {doc.id}")
+
+except Exception as e:
+    st.error(f"履歴の読み込み中にエラーが発生しました: {e}")
+    st.exception(e) # 詳細なエラー情報をログや画面に出力
