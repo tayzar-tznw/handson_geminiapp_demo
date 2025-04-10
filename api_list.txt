@@ -1,72 +1,13 @@
 NAME                                         TITLE
 aiplatform.googleapis.com                    Vertex AI API
-analyticshub.googleapis.com                  Analytics Hub API
-appengine.googleapis.com                     App Engine Admin API
 artifactregistry.googleapis.com              Artifact Registry API
-autoscaling.googleapis.com                   Cloud Autoscaling API
-bigquery.googleapis.com                      BigQuery API
-bigqueryconnection.googleapis.com            BigQuery Connection API
-bigquerydatapolicy.googleapis.com            BigQuery Data Policy API
-bigquerydatatransfer.googleapis.com          BigQuery Data Transfer API
-bigquerymigration.googleapis.com             BigQuery Migration API
-bigqueryreservation.googleapis.com           BigQuery Reservation API
-bigquerystorage.googleapis.com               BigQuery Storage API
 cloudaicompanion.googleapis.com              Gemini for Google Cloud API
-cloudapis.googleapis.com                     Google Cloud APIs
 cloudbuild.googleapis.com                    Cloud Build API
-cloudfunctions.googleapis.com                Cloud Functions API
-cloudresourcemanager.googleapis.com          Cloud Resource Manager API
-cloudtrace.googleapis.com                    Cloud Trace API
-composer.googleapis.com                      Cloud Composer API
 compute.googleapis.com                       Compute Engine API
-container.googleapis.com                     Kubernetes Engine API
-containeranalysis.googleapis.com             Container Analysis API
-containerfilesystem.googleapis.com           Container File System API
-containerregistry.googleapis.com             Container Registry API
-datacatalog.googleapis.com                   Google Cloud Data Catalog API
-dataflow.googleapis.com                      Dataflow API
-dataform.googleapis.com                      Dataform API
-dataplex.googleapis.com                      Cloud Dataplex API
 datastore.googleapis.com                     Cloud Datastore API
-deploymentmanager.googleapis.com             Cloud Deployment Manager V2 API
-discoveryengine.googleapis.com               Discovery Engine API
-dns.googleapis.com                           Cloud DNS API
-fcm.googleapis.com                           Firebase Cloud Messaging API
-fcmregistrations.googleapis.com              FCM Registration API
-firebase.googleapis.com                      Firebase Management API
-firebaseappdistribution.googleapis.com       Firebase App Distribution API
-firebasedynamiclinks.googleapis.com          Firebase Dynamic Links API
-firebasehosting.googleapis.com               Firebase Hosting API
-firebaseinstallations.googleapis.com         Firebase Installations API
-firebaseremoteconfig.googleapis.com          Firebase Remote Config API
-firebaseremoteconfigrealtime.googleapis.com  Firebase Remote Config Realtime API
-firebaserules.googleapis.com                 Firebase Rules API
 firestore.googleapis.com                     Cloud Firestore API
-gkebackup.googleapis.com                     Backup for GKE API
 iam.googleapis.com                           Identity and Access Management (IAM) API
-iamcredentials.googleapis.com                IAM Service Account Credentials API
-iap.googleapis.com                           Cloud Identity-Aware Proxy API
-identitytoolkit.googleapis.com               Identity Toolkit API
 logging.googleapis.com                       Cloud Logging API
-mobilecrashreporting.googleapis.com          Mobile Crash Reporting API
-monitoring.googleapis.com                    Cloud Monitoring API
-networkconnectivity.googleapis.com           Network Connectivity API
-notebooks.googleapis.com                     Notebooks API
-oslogin.googleapis.com                       Cloud OS Login API
-pubsub.googleapis.com                        Cloud Pub/Sub API
 run.googleapis.com                           Cloud Run Admin API
-runtimeconfig.googleapis.com                 Cloud Runtime Configuration API
-securetoken.googleapis.com                   Token Service API
-servicemanagement.googleapis.com             Service Management API
-serviceusage.googleapis.com                  Service Usage API
-source.googleapis.com                        Legacy Cloud Source Repositories API
-sourcerepo.googleapis.com                    Cloud Source Repositories API
-spanner.googleapis.com                       Cloud Spanner API
-sql-component.googleapis.com                 Cloud SQL
-sqladmin.googleapis.com                      Cloud SQL Admin API
-storage-api.googleapis.com                   Google Cloud Storage JSON API
-storage-component.googleapis.com             Cloud Storage
 storage.googleapis.com                       Cloud Storage API
-testing.googleapis.com                       Cloud Testing API
-visionai.googleapis.com                      Vision AI API
 workstations.googleapis.com                  Cloud Workstations API
