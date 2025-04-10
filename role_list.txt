@@ -1,0 +1,25 @@
+roles/serviceusage.serviceUsageAdmin (API 有効化)
+
+roles/workstations.admin (Workstation 作成)
+
+roles/storage.admin (GCS バケット作成・権限設定)
+
+roles/artifactregistry.admin (Artifact Registry リポジトリ作成)
+
+roles/cloudbuild.builds.editor (Cloud Build 実行)
+
+roles/run.admin (Cloud Run デプロイ)
+
+roles/datastore.owner (Firestore 作成)
+
+roles/resourcemanager.projectIamAdmin (サービスアカウントへの権限付与)
+
+roles/artifactregistry.writer
+
+roles/run.admin
+
+roles/iam.serviceAccountUser
+
+roles/aiplatform.admin
+
+roles/datastore.admin
