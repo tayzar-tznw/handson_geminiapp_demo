@@ -259,11 +259,10 @@
           --source . \
           --region=asia-northeast1 \
           --platform=managed \
-          --allow-unauthenticated \
+          --allow-unauthenticated
         ```
     * `--source .`: カレントディレクトリのソースコードを使って Cloud Run が自動でビルド・デプロイします。
     * `--allow-unauthenticated`: 認証なしアクセスを許可します (学習用)。
-    * `--set-env-vars`: アプリが必要とする環境変数を設定します。
     * デプロイには数分かかります。完了するとサービスの URL が表示されます。
 
 4.  **デプロイの確認:**
@@ -288,14 +287,7 @@
     pip freeze > requirements.txt
     ```
 
-3.  **IAM 権限の付与:** Cloud Run サービスアカウントに Vertex AI API 呼び出し権限を付与します。
-    ```bash
-    gcloud projects add-iam-policy-binding $PROJECT_ID \
-        --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-        --role="roles/aiplatform.user"
-    ```
-
-4.  **`app.py` の修正:** `app.py` をエディタで開き、Gemini API 呼び出しロジックを追加します。
+3.  **`app.py` の修正:** `app.py` をエディタで開き、Gemini API 呼び出しロジックを追加します。
     ```python
     # app.py の全体を以下のように修正・追記
     import streamlit as st
@@ -314,9 +306,9 @@
         except ImportError: ZoneInfo = None
 
     # --- 設定 ---
-    PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-    BUCKET_NAME = os.getenv("BUCKET_NAME")
-    VERTEX_AI_LOCATION = os.getenv("VERTEX_AI_LOCATION", "us-central1")
+    PROJECT_ID = "your-project-id"
+    BUCKET_NAME = "your-project-id-image-bucket"
+    VERTEX_AI_LOCATION = "us-central1"
 
     if not PROJECT_ID or not BUCKET_NAME or not VERTEX_AI_LOCATION:
         st.error("環境変数 (GOOGLE_CLOUD_PROJECT, BUCKET_NAME, VERTEX_AI_LOCATION) が不足しています。")
@@ -406,20 +398,14 @@
     ```
     * `app.py` を保存します。
 
-5.  **再デプロイ (環境変数追加):** `VERTEX_AI_LOCATION` を追加してデプロイします。
+4.  **再デプロイ (環境変数追加):** `VERTEX_AI_LOCATION` を追加してデプロイします。
     ```bash
-    # ★★★ リージョンと言語モデル利用可能リージョンを必要に応じて変更 ★★★
-    export REGION="asia-northeast1"
-    export VERTEX_AI_LOCATION="us-central1"
-    export SERVICE_NAME="image-analysis-service"
-    export BUCKET_NAME="your-project-id-image-bucket" # 正しいバケット名を設定
 
-    gcloud run deploy $SERVICE_NAME \
+    gcloud run deploy  \
       --source . \
       --region=$REGION \
       --platform=managed \
-      --allow-unauthenticated \
-      --set-env-vars="BUCKET_NAME=$BUCKET_NAME,VERTEX_AI_LOCATION=$VERTEX_AI_LOCATION"
+      --allow-unauthenticated
     ```
     * デプロイ後、アプリで画像分析を実行し、Gemini の結果が表示されることを確認します。
 
@@ -539,8 +525,7 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
       --source . \
       --region=$REGION \
       --platform=managed \
-      --allow-unauthenticated \
-      --set-env-vars="BUCKET_NAME=$BUCKET_NAME,VERTEX_AI_LOCATION=$VERTEX_AI_LOCATION"
+      --allow-unauthenticated
     ```
     デプロイ後、アプリにアクセスし、履歴セクションに画像付きでデータが表示されることを確認します。
 
