@@ -317,7 +317,8 @@
     # --- クライアント初期化 ---
     try:
         vertexai.init(project=PROJECT_ID, location=VERTEX_AI_LOCATION)
-        model = GenerativeModel("gemini-2.0-flash-001")
+        used_model_name="gemini-2.0-flash-001"
+        model = GenerativeModel(used_model_name)
         db = firestore.Client(project=PROJECT_ID)
         storage_client = storage.Client(project=PROJECT_ID)
         bucket = storage_client.bucket(BUCKET_NAME)
@@ -384,7 +385,7 @@
                     doc_ref = db.collection("image_analysis_history").document() # ★★★ コレクション名 ★★★
                     data_to_save = {
                         "timestamp": upload_timestamp, "gcs_uri": gcs_uri, "original_filename": uploaded_file.name,
-                        "content_type": mime_type, "gemini_model_used": model.name, "gemini_result_text": gemini_result_text,
+                        "content_type": mime_type, "gemini_model_used": used_model_name, "gemini_result_text": gemini_result_text,
                         "analysis_result": analysis_result, "status": status,
                     }
                     doc_ref.set(data_to_save)
