@@ -354,7 +354,12 @@
                     st.write("2/3: Gemini で画像を分析中...")
                     image_part = Part.from_uri(gcs_uri, mime_type=mime_type)
                     # ★★★ プロンプトを自由に調整 ★★★
-                    prompt = "この画像について説明してください。画像に写っている主要なオブジェクトや状況を簡潔に記述してください。"
+                    prompt = """
+                    この画像に写っているバイクのメーカー、型式名を特定してください。
+                    バイク以外、または型式が不明な場合は、その旨を記載してください。
+                    回答はメーカーと型式名のみ、または不明である旨のみを簡潔に記述してください。
+                    例: ヤマハ　YZF-R1, ヤマハ　VMAX, ヤマハ SR400, 不明, バイクではない
+                    """
                     generation_config = generative_models.GenerationConfig(temperature=0.4, max_output_tokens=200)
 
                     response = model.generate_content(
@@ -398,12 +403,12 @@
     ```
     * `app.py` を保存します。
 
-4.  **再デプロイ (環境変数追加):** `VERTEX_AI_LOCATION` を追加してデプロイします。
+4.  **再デプロイ :** 修正したバージョンでデプロイします。
     ```bash
 
     gcloud run deploy  \
       --source . \
-      --region=$REGION \
+      --region=asia-northeast1 \
       --platform=managed \
       --allow-unauthenticated
     ```
@@ -421,22 +426,8 @@ Gemini の分析結果を含む処理履歴を Firestore データベースに�
 1.  **Firestore データベースの作成:**
     * 初めて Firestore を使う場合、Google Cloud Console の [Firestore] ページで [データベースの作成] を行い、**Native モード** と **ロケーション** を選択します。まだ作成していない場合はここで作成してください。
 
-2.  **必要なライブラリのインストール:** (モジュール 5 で実施済み)
-
-3.  **`requirements.txt` の更新:** (モジュール 5 で実施済み)
-
-4.  **IAM 権限の付与:** Cloud Run サービスアカウントに Firestore への書き込み権限を付与します。
-    ```bash
-    gcloud projects add-iam-policy-binding $PROJECT_ID \
-        --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-        --role="roles/datastore.user"
-    ```
-
-5.  **`app.py` の修正:** (モジュール 5 で実施済み)
-    * Firestore クライアント初期化、データ書き込みが実装されています。コレクション名は `image_analysis_history` です。
-
-6.  **再デプロイとテスト:**
-    * `gcloud run deploy ...` コマンド (モジュール 5 の最後と同じもの) で再デプロイします。
+2.  **テスト:**
+    * 実装は完了しており、データベースが作成をしたのでこれで保存が完了するはずです。
     * アプリで画像分析を実行し、成功メッセージを確認します。
     * Google Cloud Console の [Firestore] ページで `image_analysis_history` コレクションにデータが保存されていることを確認します。
 
@@ -523,7 +514,7 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
     # モジュール5/6と同じ gcloud run deploy コマンドを実行
     gcloud run deploy $SERVICE_NAME \
       --source . \
-      --region=$REGION \
+      --region=asia-northeast1 \
       --platform=managed \
       --allow-unauthenticated
     ```
