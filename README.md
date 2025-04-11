@@ -19,7 +19,7 @@
 * [モジュール 7: 履歴の表示 (Firestore & GCS 画像)](#モジュール-7-履歴の表示-firestore--gcs-画像)
 * [モジュール 8: クリーンアップ (リソースの削除)](#モジュール-8-クリーンアップ-リソースの削除)
 * [まとめ と 次のステップ](#まとめ-と-次のステップ)
-* [参考: 必要な API と IAM ロール](#参考-必要な-api-と-iam-ロール)
+* [参考: 必要な IAM ロール](#参考-必要な-iam-ロール)
 
 ## 対象者
 
@@ -38,35 +38,37 @@
 
 ## 所要時間 (目安)
 
-* 1〜2 時間 
+* 1〜2 時間
 
 ## 必要なもの
 
-* Google Cloud プロジェクト (課金が有効になっていること)
-* プロジェクト内で各種リソースを作成・管理できる権限 (オーナーまたは編集者ロール推奨)
-* `gcloud` コマンドラインツールが利用可能な環境 (Cloud Workstations 内で利用)
+* **Google Cloud プロジェクト:** 課金が有効になっていること。
+* **IAM 権限:** プロジェクト内で各種リソースを作成・管理できる権限 (オーナーまたは編集者ロール推奨)。詳細は[参考: 必要な IAM ロール](#参考-必要な-iam-ロール)セクションを参照。
+* **有効化済みの API:** ハンズオンを開始する前に、Google Cloud Console で以下の API が**有効になっていること**を確認してください。
+    1.  `Cloud Workstations API` (`workstations.googleapis.com`)
+    2.  `Compute Engine API` (`compute.googleapis.com`)
+    3.  `Cloud Storage API` (`storage.googleapis.com`)
+    4.  `Cloud Run Admin API` (`run.googleapis.com`)
+    5.  `Vertex AI API` (`aiplatform.googleapis.com`)
+    6.  `Firestore API` (`firestore.googleapis.com`)
+    7.  `Cloud Build API` (`cloudbuild.googleapis.com`) (Cloud Run のソースデプロイが内部で使用するため)
+* **`gcloud` コマンドラインツール:** Cloud Workstations 内で利用可能です。
 
 ---
 
 ## モジュール 1: 開発環境のセットアップ (Cloud Workstations)
 
 クラウド上でコーディングできる、便利な開発環境を準備します。
+**(前提: Cloud Workstations API, Compute Engine API が有効であること)**
 
-1.  **API の有効化:**
-    * Google Cloud Console で、使用するプロジェクトを選択します。
-    * ナビゲーションメニューから [API とサービス] > [ライブラリ] を選択します。
-    * 以下の API を検索し、それぞれ「有効にする」をクリックします:
-        * `Cloud Workstations API`
-        * `Compute Engine API` (通常デフォルトで有効)
-
-2.  **ワークステーション構成の作成:**
+1.  **ワークステーション構成の作成:**
     * ナビゲーションメニューから [Cloud Workstations] > [ワークステーション構成] を選択します。
     * [作成] をクリックし、指示に従って構成を作成します (名前: `dev-config`, リージョン選択など)。
 
-3.  **ワークステーションの起動:**
+2.  **ワークステーションの起動:**
     * 作成した構成 (`dev-config`) を選択し、[ワークステーション] タブで [作成] をクリックしてワークステーションを起動します (名前: `my-dev-workstation` など)。
 
-4.  **ワークステーションへの接続:**
+3.  **ワークステーションへの接続:**
     * ステータスが [実行中] になったら、[起動] ボタンをクリックしてブラウザで開発環境を開きます。
 
 ---
@@ -102,15 +104,15 @@
     ```
 
 5.  **"Hello World" アプリの作成 (`app.py`):**
-    * ワークステーションのエディタ (VS Code など) で、`image-analysis-app` ディレクトリ内に `app.py` という名前のファイルを作成し、以下の内容を記述します。
-    ```python
-    # app.py
-    import streamlit as st
+    * ワークステーションのエディタで、`image-analysis-app` ディレクトリ内に `app.py` という名前のファイルを作成し、以下の内容を記述します。
+        ```python
+        # app.py
+        import streamlit as st
 
-    st.title("画像分析アプリ (v0.1)")
-    st.header("Hello, Google Cloud!")
-    st.write("Cloud Workstations で開発中！")
-    ```
+        st.title("画像分析アプリ (v0.1)")
+        st.header("Hello, Google Cloud!")
+        st.write("Cloud Workstations で開発中！")
+        ```
 
 6.  **動作確認 (ローカル実行):**
     ```bash
@@ -122,34 +124,32 @@
     ```bash
     pip freeze > requirements.txt
     ```
-    (`streamlit` とその依存ライブラリが含まれていることを確認してください)
 
 ---
 
 ## モジュール 3: 画像アップロード機能の追加 (Cloud Storage)
 
 ユーザーが画像をアップロードし、それをクラウドに保存する機能を追加します。
+**(前提: Cloud Storage API が有効であること)**
 
-1.  **API の有効化:**
-    * Google Cloud Console で `Cloud Storage API` を検索し、有効にします。
-
-2.  **GCS バケットの作成:**
-    * [Cloud Storage] > [バケット] で [作成] をクリックします。
-    * **名前:** **世界中で一意** な名前 (例: `your-project-id-image-bucket`) を入力。 **`your-project-id-image-bucket` を実際に使うバケット名に置き換えてください。**
+1.  **GCS バケットの作成:** 画像を保存する場所を作成します。
+    * ナビゲーションメニューから [Cloud Storage] > [バケット] を選択します。
+    * [作成] をクリックします。
+    * **名前:** **世界中で一意 (ユニーク)** な名前 (例: `your-project-id-image-bucket`) を入力。 **`your-project-id-image-bucket` を実際に使うバケット名に置き換えてください。**
     * リージョン、アクセス制御 (均一)、公開アクセス禁止などを設定し、作成します。
 
-3.  **必要なライブラリのインストール:**
+2.  **必要なライブラリのインストール:**
     ```bash
     # (venv が有効な状態で)
     pip install google-cloud-storage
     ```
 
-4.  **`requirements.txt` の更新:**
+3.  **`requirements.txt` の更新:**
     ```bash
     pip freeze > requirements.txt
     ```
 
-5.  **`app.py` の修正:** `app.py` ファイルを開き、内容を以下のように修正します。
+4.  **`app.py` の修正:** `app.py` ファイルを開き、内容を以下のように修正します。
     ```python
     # app.py の修正・追記
     import streamlit as st
@@ -200,15 +200,18 @@
     ```
     **【重要】** コード中の `your-project-id` と `your-project-id-image-bucket` を、ご自身の値に**必ず置き換えてください**。
 
-6.  **認証と権限 (Workstation ローカル実行時):**
+5.  **認証と権限 (Workstation ローカル実行時):**
     * GCS への書き込み権限が必要です。ターミナルで Application Default Credentials (ADC) を設定します:
         ```bash
         gcloud auth application-default login
         ```
     * ログインしたユーザーアカウントに、対象 GCS バケットへの書き込み権限 (`roles/storage.objectAdmin` または `objectCreator`) が必要です。IAM ページで確認・付与してください。
 
-7.  **動作確認 (ローカル実行):**
+6.  **動作確認 (ローカル実行):**
     * `app.py` を保存し、`streamlit run app.py` でローカル実行します。
+    ```bash
+    streamlit run app.py
+    ```
     * 画像をアップロードし、GCS に保存されることを確認します。
 
 ---
@@ -216,11 +219,9 @@
 ## モジュール 4: アプリの Cloud Run へのデプロイ (ソースコードから)
 
 作成したアプリを、Cloud Workstations 上のソースコードから直接 Cloud Run にデプロイします。
+**(前提: Cloud Run Admin API が有効であること)**
 
-1.  **API の有効化:**
-    * Google Cloud Console で `Cloud Run Admin API` を検索し、有効にします。
-
-2.  **`app.py` の環境変数対応:** `app.py` が `PROJECT_ID` と `BUCKET_NAME` をハードコードではなく `os.getenv()` で読み取るように修正します。(モジュール 3 で実施済み)
+1.  **`app.py` の環境変数対応:** `app.py` が `PROJECT_ID` と `BUCKET_NAME` をハードコードではなく `os.getenv()` で読み取るように修正します。(モジュール 3 で実施済み)
     ```python
     # app.py の設定部分 (再掲)
     import os # ファイル先頭で import
@@ -242,7 +243,7 @@
     ```
     * この修正を `app.py` に適用し、保存してください。
 
-3.  **Cloud Run サービスアカウントへの権限付与:** Cloud Run で動作するアプリが GCS にアクセスするために権限が必要です。
+2.  **Cloud Run サービスアカウントへの権限付与:** Cloud Run で動作するアプリが GCS にアクセスするために権限が必要です。
     * プロジェクト番号を取得:
         ```bash
         # ★★★ $PROJECT_ID を実際のプロジェクトIDに置き換えるか、環境変数として設定 ★★★
@@ -258,7 +259,7 @@
             --role="roles/storage.objectAdmin"
         ```
 
-4.  **Cloud Run へのデプロイ (ソースコードから):**
+3.  **Cloud Run へのデプロイ (ソースコードから):**
     * ワークステーションのターミナルで、**`app.py` と `requirements.txt` があるディレクトリ (`image-analysis-app`) にいることを確認**します。
     * 以下のコマンドを実行してデプロイします:
         ```bash
@@ -279,7 +280,7 @@
     * `--set-env-vars`: アプリが必要とする環境変数を設定します。
     * デプロイには数分かかります。完了するとサービスの URL が表示されます。
 
-5.  **デプロイの確認:**
+4.  **デプロイの確認:**
     * 表示された URL にブラウザでアクセスし、アプリが動作することを確認します。
     * 画像をアップロードし、GCS に保存されることを確認します。
 
@@ -288,29 +289,27 @@
 ## モジュール 5: AI による画像分析機能の追加 (Gemini API)
 
 アップロードされた画像を Gemini API に渡し、画像の内容を分析させます。
+**(前提: Vertex AI API が有効であること)**
 
-1.  **API の有効化:**
-    * Google Cloud Console で `Vertex AI API` を検索し、有効にします。
-
-2.  **必要なライブラリのインストール:** (Firestore も含める)
+1.  **必要なライブラリのインストール:** (Firestore も含める)
     ```bash
     # (venv が有効な状態で)
     pip install google-cloud-aiplatform google-cloud-firestore pytz # pytz はタイムゾーン用(任意)
     ```
 
-3.  **`requirements.txt` の更新:**
+2.  **`requirements.txt` の更新:**
     ```bash
     pip freeze > requirements.txt
     ```
 
-4.  **IAM 権限の付与:** Cloud Run サービスアカウントに Vertex AI API 呼び出し権限を付与します。
+3.  **IAM 権限の付与:** Cloud Run サービスアカウントに Vertex AI API 呼び出し権限を付与します。
     ```bash
     gcloud projects add-iam-policy-binding $PROJECT_ID \
         --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
         --role="roles/aiplatform.user"
     ```
 
-5.  **`app.py` の修正:** `app.py` をエディタで開き、Gemini API 呼び出しロジックを追加します。(前のモジュールで追加した Firestore クライアント初期化も含む)
+4.  **`app.py` の修正:** `app.py` をエディタで開き、Gemini API 呼び出しロジックを追加します。
     ```python
     # app.py の全体を以下のように修正・追記
     import streamlit as st
@@ -340,7 +339,7 @@
     # --- クライアント初期化 ---
     try:
         vertexai.init(project=PROJECT_ID, location=VERTEX_AI_LOCATION)
-        model = GenerativeModel("gemini-1.5-flash-001")
+        model = GenerativeModel("gemini-2.0-flash-001")
         db = firestore.Client(project=PROJECT_ID)
         storage_client = storage.Client(project=PROJECT_ID)
         bucket = storage_client.bucket(BUCKET_NAME)
@@ -421,7 +420,7 @@
     ```
     * `app.py` を保存します。
 
-6.  **再デプロイ (環境変数追加):** `VERTEX_AI_LOCATION` を追加してデプロイします。
+5.  **再デプロイ (環境変数追加):** `VERTEX_AI_LOCATION` を追加してデプロイします。
     ```bash
     # ★★★ リージョンと言語モデル利用可能リージョンを必要に応じて変更 ★★★
     export REGION="asia-northeast1"
@@ -443,12 +442,12 @@
 ## モジュール 6: 分析履歴の保存 (Firestore)
 
 Gemini の分析結果を含む処理履歴を Firestore データベースに保存します。
+**(前提: Firestore API が有効であること)**
 
 * **このステップの実装は、モジュール 5 の `app.py` 修正内容に既に含まれています。**
 
-1.  **API の有効化:**
-    * Google Cloud Console で `Firestore API` を検索し、有効にします。
-    * 初めて Firestore を使う場合、[Firestore] ページで [データベースの作成] を行い、**Native モード** と **ロケーション** を選択します。
+1.  **Firestore データベースの作成:**
+    * 初めて Firestore を使う場合、Google Cloud Console の [Firestore] ページで [データベースの作成] を行い、**Native モード** と **ロケーション** を選択します。まだ作成していない場合はここで作成してください。
 
 2.  **必要なライブラリのインストール:** (モジュール 5 で実施済み)
 
@@ -478,6 +477,7 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 1.  **(オプション) `pytz` のインストール:** (モジュール 5 で実施済み or 不要ならスキップ)
 
 2.  **`app.py` の修正:** ファイル末尾の履歴表示セクション (コメントアウトされていた部分) を実装します。`app.py` をエディタで開き、以下のコードブロックをファイルの末尾に追加または修正します。
+
     ```python
     # app.py の修正 (ファイル末尾に追加)
 
@@ -568,7 +568,7 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 2.  **Cloud Storage バケットの削除:** [Cloud Storage] -> バケット選択 -> 削除。
 3.  **Firestore データの削除:** [Firestore] -> データ -> コレクション選択 -> 削除。
 4.  **Cloud Workstations の停止・削除:** [Cloud Workstations] -> ワークステーション選択 -> 停止/削除、及び [ワークステーション構成] -> 構成選択 -> 削除。
-5.  **(Cloud Run ソースデプロイで裏で作成されたリソース):** Cloud Run がソースデプロイ時に裏で GCR や Artifact Registry にイメージを保存したり、Cloud Build を使用している場合があります。これらも不要であれば確認・削除してください ([Container Registry] / [Artifact Registry] / [Cloud Build] ページ)。
+5.  **(Cloud Run ソースデプロイで裏で作成されたリソース):** [Container Registry] / [Artifact Registry] / [Cloud Build] ページで不要なイメージやビルド履歴を確認・削除。
 
 ---
 
@@ -590,25 +590,12 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 * ユーザー認証 (IAP) の追加
 * 履歴機能の強化 (検索、ページネーション)
 * コスト管理の学習
-* Dockerfile を使ったデプロイの検討
 
 このハンズオンが、あなたの Google Cloud ジャーニーの一助となれば幸いです！
 
 ---
 
-## 参考: 必要な API と IAM ロール
-
-### 有効化が必要な API
-
-1.  `Cloud Workstations API` (`workstations.googleapis.com`)
-2.  `Compute Engine API` (`compute.googleapis.com`)
-3.  `Cloud Storage API` (`storage.googleapis.com`)
-4.  `Cloud Run Admin API` (`run.googleapis.com`)
-5.  `Vertex AI API` (`aiplatform.googleapis.com`)
-6.  `Firestore API` (`firestore.googleapis.com`)
-7.  `Cloud Build API` (`cloudbuild.googleapis.com`) (Cloud Run のソースデプロイが内部で使用するため)
-
-### 必要な主な IAM ロール
+## 参考: 必要な IAM ロール
 
 **1. ハンズオン実施ユーザー:**
 
@@ -619,4 +606,4 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 * `roles/storage.objectAdmin` (GCS 読み書き)
 * `roles/aiplatform.user` (Vertex AI API 呼び出し)
 * `roles/datastore.user` (Firestore 読み書き)
-* **(ソースデプロイが内部で使用):** Cloud Run のソースからのデプロイ機能は、内部的に Cloud Build サービスアカウント (`[PROJECT_NUMBER]@cloudbuild.gserviceaccount.com`) を使用してコンテナイメージをビルドします。このため、Cloud Build サービスアカウントには、ソースコード (通常は一時的な GCS バケットにコピーされる) へのアクセス権や、コンテナイメージをビルドして保存 (通常は Container Registry または Artifact Registry) するための権限 (例: `roles/storage.admin`, `roles/cloudbuild.builds.builder`) が必要になります。多くの場合、これらの権限は Google Cloud によって自動的に管理・設定されますが、組織ポリシーなどで制限されている場合は、手動での権限付与が必要になる可能性があります。
+* **(ソースデプロイが内部で使用):** Cloud Build サービスアカウントに必要な権限 (多くの場合、自動管理される)
