@@ -116,7 +116,7 @@
 
 6.  **動作確認 (ローカル実行):**
     ```bash
-    streamlit run app.py
+    streamlit run app.py --server.enableCORS=false
     ```
     ターミナルに URL が表示されます。[Open in Browser] ボタンが表示されたらクリックするか、表示されたポート (通常 8501) を手動で転送設定して `localhost:8501` にアクセスします。"Hello, Google Cloud!" が表示されたら、ターミナルで `Ctrl+C` を押してアプリを停止します。
 
@@ -177,7 +177,7 @@
     uploaded_file = st.file_uploader("分析したい画像を選択してください...", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        st.image(uploaded_file, caption='アップロードされた画像', use_column_width=True)
+        st.image(uploaded_file, caption='アップロードされた画像', use_container_width=True)
         st.write("")
 
         if st.button("画像を GCS にアップロード"):
@@ -210,7 +210,7 @@
 6.  **動作確認 (ローカル実行):**
     * `app.py` を保存し、`streamlit run app.py` でローカル実行します。
     ```bash
-    streamlit run app.py
+    streamlit run app.py --server.enableCORS=false
     ```
     * 画像をアップロードし、GCS に保存されることを確認します。
 
@@ -221,59 +221,45 @@
 作成したアプリを、Cloud Workstations 上のソースコードから直接 Cloud Run にデプロイします。
 **(前提: Cloud Run Admin API が有効であること)**
 
-1.  **`app.py` の環境変数対応:** `app.py` が `PROJECT_ID` と `BUCKET_NAME` をハードコードではなく `os.getenv()` で読み取るように修正します。(モジュール 3 で実施済み)
-    ```python
-    # app.py の設定部分 (再掲)
-    import os # ファイル先頭で import
-
-    # --- 設定 ---
-    PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-    BUCKET_NAME = os.getenv("BUCKET_NAME")
-
-    # 環境変数が設定されていない場合のエラー処理 (推奨)
-    if not PROJECT_ID:
-        st.error("環境変数 GOOGLE_CLOUD_PROJECT が設定されていません。")
-        st.stop()
-    if not BUCKET_NAME:
-        st.error("環境変数 BUCKET_NAME が設定されていません。")
-        st.stop()
-
-    # --- GCS クライアントの初期化 ---
-    # ... (変更なし) ...
-    ```
-    * この修正を `app.py` に適用し、保存してください。
-
-2.  **Cloud Run サービスアカウントへの権限付与:** Cloud Run で動作するアプリが GCS にアクセスするために権限が必要です。
+1.  Dockerfile というファイルを作成し、次のソースコードを記述します:
     * プロジェクト番号を取得:
-        ```bash
-        # ★★★ $PROJECT_ID を実際のプロジェクトIDに置き換えるか、環境変数として設定 ★★★
-        export PROJECT_ID="your-project-id"
-        PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-        ```
-    * Cloud Run が使用するサービスアカウント (デフォルト: Compute Engine default SA) に権限を付与します:
-        ```bash
-        # ★★★ $BUCKET_NAME を実際のバケット名に置き換えるか、環境変数として設定 ★★★
-        export BUCKET_NAME="your-project-id-image-bucket"
-        gcloud storage buckets add-iam-policy-binding gs://$BUCKET_NAME \
-            --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-            --role="roles/storage.objectAdmin"
+        ```Dockerfile
+        # ベースイメージを選択 (Python 3.11 のスリム版を使用)
+        FROM python:3.11-slim
+
+        # 環境変数 PORT を設定 (Cloud Run はこのポートでリッスンすることを期待する)
+        ENV PORT 8080
+        # Python の出力をバッファリングしない (ログがすぐに見えるように)
+        ENV PYTHONUNBUFFERED TRUE
+
+        # 作業ディレクトリを設定
+        WORKDIR /app
+
+        # 依存関係ファイルをコピーしてインストール
+        COPY requirements.txt ./
+        RUN pip install --no-cache-dir -r requirements.txt
+
+        # アプリケーションコードをコピー
+        COPY . .
+
+        # コンテナがリッスンするポートを公開
+        EXPOSE ${PORT}
+
+        # アプリケーションを実行するコマンド
+        # Cloud Run では 0.0.0.0 でリッスンし、PORT 環境変数を尊重する必要がある
+        # WebSocket の問題を回避するため --server.enableCORS false を含める
+        CMD streamlit run app.py --server.port=${PORT} --server.address=0.0.0.0 --server.enableCORS=false
         ```
 
 3.  **Cloud Run へのデプロイ (ソースコードから):**
-    * ワークステーションのターミナルで、**`app.py` と `requirements.txt` があるディレクトリ (`image-analysis-app`) にいることを確認**します。
+    * ワークステーションのターミナルで、**`app.py` と `requirements.txt` `Dockerfile` があるディレクトリ (`image-analysis-app`) にいることを確認**します。
     * 以下のコマンドを実行してデプロイします:
         ```bash
-        # ★★★ 値を置き換えてください ★★★
-        export REGION="asia-northeast1" # デプロイするリージョン
-        export SERVICE_NAME="image-analysis-service" # Cloud Run のサービス名 (任意)
-        # BUCKET_NAME は上で export 済みのはず
-
         gcloud run deploy $SERVICE_NAME \
           --source . \
-          --region=$REGION \
+          --region=asia-northeast1 \
           --platform=managed \
           --allow-unauthenticated \
-          --set-env-vars="BUCKET_NAME=$BUCKET_NAME"
         ```
     * `--source .`: カレントディレクトリのソースコードを使って Cloud Run が自動でビルド・デプロイします。
     * `--allow-unauthenticated`: 認証なしアクセスを許可します (学習用)。
@@ -353,7 +339,7 @@
     uploaded_file = st.file_uploader("分析したい画像を選択してください...", type=["jpg", "jpeg", "png"])
 
     if uploaded_file is not None:
-        st.image(uploaded_file, caption='アップロードされた画像', use_column_width=True)
+        st.image(uploaded_file, caption='アップロードされた画像', use_container_width=True)
 
         if st.button("画像をアップロードして解析"):
             gcs_uri, gemini_result_text, analysis_result, status = None, "解析未実行", "不明", "Pending"
