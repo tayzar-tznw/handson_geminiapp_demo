@@ -2,7 +2,7 @@
 
 **最終更新:** 2025年4月11日
 
-このリポジトリは、Google Cloud の各種サービスを組み合わせて AI 画像分析 Web アプリケーションを構築するハンズオンワークショップのガイドです。Cloud Workstations を開発環境として使用し、Streamlit アプリを作成、Cloud Storage への画像アップロード、Gemini API での分析、Firestore への履歴保存、そして Cloud Run への直接デプロイまでをステップバイステップで学習します。(Git および CI/CD 手順は含みません)
+このリポジトリは、Google Cloud の各種サービスを組み合わせて AI 画像分析 Web アプリケーションを構築するハンズオンワークショップのガイドです。Cloud Shell Editor を開発環境として使用し、Streamlit アプリを作成、Cloud Storage への画像アップロード、Gemini API での分析、Firestore への履歴保存、そして Cloud Run への直接デプロイまでをステップバイステップで学習します。(Git および CI/CD 手順は含みません)
 
 ![アプリケーション概要図](images/handson.png)
 
@@ -31,7 +31,7 @@
 
 ## 学習目標
 
-* Cloud Workstations を使ったクラウドベースの開発環境の利用方法
+* Cloud Shell Editor を使ったクラウドベースの開発環境の利用方法
 * Streamlit を使った簡単な Web アプリケーションの作成
 * Cloud Storage へのファイルアップロード機能の実装
 * `gcloud` コマンドを使った Cloud Run への直接デプロイ (ソースコードから)
@@ -47,31 +47,26 @@
 * **Google Cloud プロジェクト:** 課金が有効になっていること。
 * **IAM 権限:** プロジェクト内で各種リソースを作成・管理できる権限 (オーナーまたは編集者ロール推奨)。詳細は[参考: 必要な IAM ロール](#参考-必要な-iam-ロール)セクションを参照。
 * **有効化済みの API:** ハンズオンを開始する前に、Google Cloud Console で以下の API が**有効になっていること**を確認してください。
-    1.  `Cloud Workstations API` (`workstations.googleapis.com`)
-    2.  `Compute Engine API` (`compute.googleapis.com`)
-    3.  `Cloud Storage API` (`storage.googleapis.com`)
-    4.  `Cloud Run Admin API` (`run.googleapis.com`)
-    5.  `Vertex AI API` (`aiplatform.googleapis.com`)
-    6.  `Firestore API` (`firestore.googleapis.com`)
-    7.  `Cloud Build API` (`cloudbuild.googleapis.com`) (Cloud Run のソースデプロイが内部で使用するため)
+    1.  `Compute Engine API` (`compute.googleapis.com`)
+    2.  `Cloud Storage API` (`storage.googleapis.com`)
+    3.  `Cloud Run Admin API` (`run.googleapis.com`)
+    4.  `Vertex AI API` (`aiplatform.googleapis.com`)
+    5.  `Firestore API` (`firestore.googleapis.com`)
+    6.  `Cloud Build API` (`cloudbuild.googleapis.com`) (Cloud Run のソースデプロイが内部で使用するため)
 * **`gcloud` コマンドラインツール:** Cloud Workstations 内で利用可能です。
 
 ---
 
-## モジュール 1: 開発環境のセットアップ (Cloud Workstations)
+## モジュール 1: 開発環境のセットアップ (Cloud Shell Editor)
 
 クラウド上でコーディングできる、便利な開発環境を準備します。
-**(前提: Cloud Workstations API, Compute Engine API が有効であること)**
 
-1.  **ワークステーション構成の作成:**
-    * ナビゲーションメニューから [Cloud Workstations] > [ワークステーション構成] を選択します。
-    * [作成] をクリックし、指示に従って構成を作成します (名前: `dev-config`, リージョン選択など)。
+1.  **Cloud Shell Editor の起動:**
+    * ナビゲーションメニューから Cloud Shell を起動します。
+    * ![cloudhshell_icon](images/cloudshell.png)
+    * Open Editor ボタンをクリックします。
 
-2.  **ワークステーションの起動:**
-    * 作成した構成 (`dev-config`) を選択し、[ワークステーション] タブで [作成] をクリックしてワークステーションを起動します (名前: `my-dev-workstation` など)。
-
-3.  **ワークステーションへの接続:**
-    * ステータスが [実行中] になったら、[起動] ボタンをクリックしてブラウザで開発環境を開きます。
+クラウド上の開発環境が立ち上がりました。
 
 ---
 
@@ -80,7 +75,7 @@
 シンプルな Web アプリを作成します。
 
 1.  **必要なツールの確認とインストール:**
-    * ワークステーションのターミナルを開きます (VS Code の場合: [Terminal] > [New Terminal])。
+    * ターミナルを開きます (VS Code の場合: [Terminal] > [New Terminal])。
     * Python 仮想環境ツール `venv` が必要です。なければインストールします:
         ```bash
         sudo apt update
