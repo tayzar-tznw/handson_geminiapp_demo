@@ -4,7 +4,7 @@
 
 このリポジトリは、Google Cloud の各種サービスを組み合わせて AI 画像分析 Web アプリケーションを構築するハンズオンワークショップのガイドです。Cloud Workstations を開発環境として使用し、Streamlit アプリを作成、Cloud Storage への画像アップロード、Gemini API での分析、Firestore への履歴保存、そして Cloud Run への直接デプロイまでをステップバイステップで学習します。(Git および CI/CD 手順は含みません)
 
-![アプリケーション概要図](images/handson_overview.png)
+![アプリケーション概要図](images/handson.png)
 
 ## 目次
 
