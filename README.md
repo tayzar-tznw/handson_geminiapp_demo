@@ -306,6 +306,7 @@
     PROJECT_ID = "your-project-id"
     BUCKET_NAME = "your-project-id-image-bucket"
     VERTEX_AI_LOCATION = "us-central1"
+    FIRESTORE_DATABASE_ID = "###YOUR_NAME_DB###"
 
     if not PROJECT_ID or not BUCKET_NAME or not VERTEX_AI_LOCATION:
         st.error("環境変数 (GOOGLE_CLOUD_PROJECT, BUCKET_NAME, VERTEX_AI_LOCATION) が不足しています。")
@@ -316,7 +317,7 @@
         vertexai.init(project=PROJECT_ID, location=VERTEX_AI_LOCATION)
         used_model_name="gemini-2.0-flash-001"
         model = GenerativeModel(used_model_name)
-        db = firestore.Client(project=PROJECT_ID)
+        db = firestore.Client(project=PROJECT_ID, database=FIRESTORE_DATABASE_ID)
         storage_client = storage.Client(project=PROJECT_ID)
         bucket = storage_client.bucket(BUCKET_NAME)
     except Exception as e:
@@ -422,7 +423,7 @@ Gemini の分析結果を含む処理履歴を Firestore データベースに�
 * **このステップの実装は、モジュール 5 の `app.py` 修正内容に既に含まれています。**
 
 1.  **Firestore データベースの作成:**
-    * 初めて Firestore を使う場合、Google Cloud Console の [Firestore] ページで [データベースの作成] を行い、**Native モード** と **ロケーション** を選択します。まだ作成していない場合はここで作成してください。
+    * 初めて Firestore を使う場合、Google Cloud Console の [Firestore] ページで [データベースの作成] を行い、**Native モード** と **ロケーション** を選択します。まだ作成していない場合はここで作成してください。(データベースID は自分の名前を含むIDを指定してください。 ###YOUR_NAME_DB###)
     * コレクションID は **image_analysis_history** で作成してください。
 
 2.  **テスト:**
