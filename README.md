@@ -426,8 +426,11 @@ Gemini の分析結果を含む処理履歴を Firestore データベースに�
 1.  **Firestore データベースの作成:**
     * 初めて Firestore を使う場合、Google Cloud Console の [Firestore] ページで [データベースの作成] を行い、**Native モード** と **ロケーション** を選択します。まだ作成していない場合はここで作成してください。(データベースID は自分の名前を含むIDを指定してください。 ###YOUR_NAME_DB###)
     * コレクションID は **image_analysis_history** で作成してください。
+  
+2. **app.py の修正**
+    * app.py の YOUR_NAME_DB を今作成したdatabase id に変更してください
 
-2.  **テスト:**
+4.  **テスト:**
     * 実装は完了しており、データベースが作成をしたのでこれで保存が完了するはずです。
     * アプリで画像分析を実行し、成功メッセージを確認します。
     * Google Cloud Console の [Firestore] ページで `image_analysis_history` コレクションにデータが保存されていることを確認します。
