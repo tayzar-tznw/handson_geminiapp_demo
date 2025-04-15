@@ -429,6 +429,16 @@ Gemini の分析結果を含む処理履歴を Firestore データベースに�
   
 2. **app.py の修正**
     * app.py の YOUR_NAME_DB を今作成したdatabase id に変更してください
+    
+3.  **再デプロイ**
+    ```bash
+    # モジュール5と同じ gcloud run deploy コマンドを実行
+    gcloud run deploy YOURNAME-image-analysis-app \
+      --source . \
+      --region=asia-northeast1 \
+      --platform=managed \
+      --allow-unauthenticated
+    ```
 
 4.  **テスト:**
     * 実装は完了しており、データベースが作成をしたのでこれで保存が完了するはずです。
@@ -542,7 +552,6 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 
 お疲れ様でした！ このワークショップでは、以下の Google Cloud サービスを使って AI 画像分析アプリを構築・デプロイする流れを体験しました。
 
-* **Cloud Workstations:** クラウドベースの開発環境
 * **Streamlit:** Python での Web アプリ作成
 * **Cloud Storage:** ファイルの保存
 * **Cloud Run (Source Deploy):** ソースからのサーバーレスアプリ実行
