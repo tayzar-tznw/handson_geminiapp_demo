@@ -253,7 +253,7 @@
     * 以下のコマンドを実行してデプロイします:
     * service name は YOURNAME-image-analysis-app (YOURNAME は自分の名前をいれてください)
         ```bash
-        gcloud run deploy \
+        gcloud run deploy YOURNAME-image-analysis-app \
           --source . \
           --region=asia-northeast1 \
           --platform=managed \
@@ -406,7 +406,7 @@
 4.  **再デプロイ :** 修正したバージョンでデプロイします。
     ```bash
 
-    gcloud run deploy  \
+    gcloud run deploy YOURNAME-image-analysis-app \
       --source . \
       --region=asia-northeast1 \
       --platform=managed \
@@ -513,7 +513,7 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 3.  **再デプロイとテスト:**
     ```bash
     # モジュール5/6と同じ gcloud run deploy コマンドを実行
-    gcloud run deploy  \
+    gcloud run deploy YOURNAME-image-analysis-app \
       --source . \
       --region=asia-northeast1 \
       --platform=managed \
