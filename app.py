@@ -25,9 +25,9 @@ except ImportError:
 # Google Cloud プロジェクト ID を環境変数から取得（推奨）
 # または直接記述（テスト目的）
 # PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-PROJECT_ID = "gossy-workstations" # あなたのプロジェクト ID に置き換えてください
+PROJECT_ID = "your-project-id" # あなたのプロジェクト ID に置き換えてください
 # GCS バケット名を設定
-BUCKET_NAME = "gossy-gemini-handson" # 作成したバケット名に置き換えてください
+BUCKET_NAME = "your-bucket" # 作成したバケット名に置き換えてください
 # Vertex AI Location を設定
 VERTEX_AI_LOCATION = os.getenv("VERTEX_AI_LOCATION", "us-central1") # デフォルトを設定
 

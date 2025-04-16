@@ -63,8 +63,9 @@
 
 1.  **Cloud Shell Editor の起動:**
     * ナビゲーションメニューから Cloud Shell を起動します。
-    * ![cloudhshell_icon](images/cloudshell.png)
-    * Open Editor ボタンをクリックします。
+     * ![cloudhshell_icon](images/open_cloudshell.png)
+    * Cloud Shell Editor を起動します
+     * ![open_editor](images/open_editor.png)
 
 クラウド上の開発環境が立ち上がりました。
 
