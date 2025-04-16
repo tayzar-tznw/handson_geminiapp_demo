@@ -12,7 +12,7 @@
 * [学習目標](#学習目標)
 * [所要時間 (目安)](#所要時間-目安)
 * [必要なもの](#必要なもの)
-* [モジュール 1: 開発環境のセットアップ (Cloud Workstations)](#モジュール-1-開発環境のセットアップ-cloud-workstations)
+* [モジュール 1: 開発環境のセットアップ Cloud Shell Editor](#モジュール-1-開発環境のセットアップ-Cloud-Shell-Editor)
 * [モジュール 2: 基本的な Web アプリの作成 (Streamlit)](#モジュール-2-基本的な-web-アプリの作成-streamlit)
 * [モジュール 3: 画像アップロード機能の追加 (Cloud Storage)](#モジュール-3-画像アップロード機能の追加-cloud-storage)
 * [モジュール 4: アプリの Cloud Run へのデプロイ (ソースコードから)](#モジュール-4-アプリの-cloud-run-へのデプロイ-ソースコードから)
@@ -57,7 +57,7 @@
 
 ---
 
-## モジュール 1: 開発環境のセットアップ (Cloud Shell Editor)
+## モジュール 1: 開発環境のセットアップ Cloud Shell Editor
 
 クラウド上でコーディングできる、便利な開発環境を準備します。
 
@@ -252,8 +252,9 @@
 3.  **Cloud Run へのデプロイ (ソースコードから):**
     * ワークステーションのターミナルで、**`app.py` と `requirements.txt` `Dockerfile` があるディレクトリ (`image-analysis-app`) にいることを確認**します。
     * 以下のコマンドを実行してデプロイします:
+    * service name は YOURNAME-image-analysis-app (YOURNAME は自分の名前をいれてください)
         ```bash
-        gcloud run deploy $SERVICE_NAME \
+        gcloud run deploy YOURNAME-image-analysis-app \
           --source . \
           --region=asia-northeast1 \
           --platform=managed \
@@ -406,7 +407,7 @@
 4.  **再デプロイ :** 修正したバージョンでデプロイします。
     ```bash
 
-    gcloud run deploy  \
+    gcloud run deploy YOURNAME-image-analysis-app \
       --source . \
       --region=asia-northeast1 \
       --platform=managed \
@@ -426,8 +427,21 @@ Gemini の分析結果を含む処理履歴を Firestore データベースに�
 1.  **Firestore データベースの作成:**
     * 初めて Firestore を使う場合、Google Cloud Console の [Firestore] ページで [データベースの作成] を行い、**Native モード** と **ロケーション** を選択します。まだ作成していない場合はここで作成してください。(データベースID は自分の名前を含むIDを指定してください。 ###YOUR_NAME_DB###)
     * コレクションID は **image_analysis_history** で作成してください。
+  
+2. **app.py の修正**
+    * app.py の YOUR_NAME_DB を今作成したdatabase id に変更してください
+    
+3.  **再デプロイ**
+    ```bash
+    # モジュール5と同じ gcloud run deploy コマンドを実行
+    gcloud run deploy YOURNAME-image-analysis-app \
+      --source . \
+      --region=asia-northeast1 \
+      --platform=managed \
+      --allow-unauthenticated
+    ```
 
-2.  **テスト:**
+4.  **テスト:**
     * 実装は完了しており、データベースが作成をしたのでこれで保存が完了するはずです。
     * アプリで画像分析を実行し、成功メッセージを確認します。
     * Google Cloud Console の [Firestore] ページで `image_analysis_history` コレクションにデータが保存されていることを確認します。
@@ -513,7 +527,7 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 3.  **再デプロイとテスト:**
     ```bash
     # モジュール5/6と同じ gcloud run deploy コマンドを実行
-    gcloud run deploy $SERVICE_NAME \
+    gcloud run deploy YOURNAME-image-analysis-app \
       --source . \
       --region=asia-northeast1 \
       --platform=managed \
@@ -539,7 +553,6 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 
 お疲れ様でした！ このワークショップでは、以下の Google Cloud サービスを使って AI 画像分析アプリを構築・デプロイする流れを体験しました。
 
-* **Cloud Workstations:** クラウドベースの開発環境
 * **Streamlit:** Python での Web アプリ作成
 * **Cloud Storage:** ファイルの保存
 * **Cloud Run (Source Deploy):** ソースからのサーバーレスアプリ実行
