@@ -429,16 +429,121 @@ Gemini の分析結果を含む処理履歴を Firestore データベースに�
 
 ---
 
-## モジュール 7: 履歴の表示 (Firestore & GCS 画像)
+## モジュール 7: 履歴の保存と表示 (Firestore & GCS 画像)
 
 Firestore に保存した履歴と、対応する画像をアプリ内に表示します。
 
-1.  **`app.py` の修正:** ファイル末尾の履歴表示セクション (コメントアウトされていた部分) を実装します。`app.py` をエディタで開き、以下のコードブロックをファイルの末尾に追加または修正します。
+1.  **`app.py` の修正:** 履歴表示セクション (コメントアウトされていた部分) を実装します。`app.py` をエディタで開き、以下のコードに修正します。
 
     ```python
-    # app.py の修正 (ファイル末尾に追加)
+    # app.py の全体を以下のように修正・追記
+    import streamlit as st
+    from google.cloud import storage
+    import os
+    import uuid
+    import vertexai
+    from vertexai.generative_models import GenerativeModel, Part, FinishReason
+    import vertexai.preview.generative_models as generative_models
+    import datetime
+    from google.cloud import firestore
+    from google.cloud.exceptions import NotFound
+    try: from zoneinfo import ZoneInfo
+    except ImportError:
+        try: import pytz; ZoneInfo = pytz.timezone
+        except ImportError: ZoneInfo = None
 
-    # ... (これまでのコードはそのまま) ...
+    # --- 設定 ---
+    PROJECT_ID = "your-project-id"
+    BUCKET_NAME = "your-project-id-image-bucket"
+    VERTEX_AI_LOCATION = "us-central1"
+    FIRESTORE_DATABASE_ID = "###YOUR_NAME_DB###"   # モジュール6 で設定するため今はこのままで大丈夫
+
+    if not PROJECT_ID or not BUCKET_NAME or not VERTEX_AI_LOCATION:
+        st.error("環境変数 (GOOGLE_CLOUD_PROJECT, BUCKET_NAME, VERTEX_AI_LOCATION) が不足しています。")
+        st.stop()
+
+    # --- クライアント初期化 ---
+    try:
+        vertexai.init(project=PROJECT_ID, location=VERTEX_AI_LOCATION)
+        used_model_name="gemini-2.0-flash-001"
+        model = GenerativeModel(used_model_name)
+        db = firestore.Client(project=PROJECT_ID, database=FIRESTORE_DATABASE_ID)
+        storage_client = storage.Client(project=PROJECT_ID)
+        bucket = storage_client.bucket(BUCKET_NAME)
+    except Exception as e:
+        st.error(f"クライアント初期化失敗: {e}"); st.stop()
+
+    # --- Streamlit アプリケーション ---
+    st.title("画像分析アプリ (v1.0)")
+    st.write(f"Project: {PROJECT_ID}, Bucket: {BUCKET_NAME}, Vertex AI Location: {VERTEX_AI_LOCATION}")
+
+    uploaded_file = st.file_uploader("分析したい画像を選択してください...", type=["jpg", "jpeg", "png"])
+
+    if uploaded_file is not None:
+        st.image(uploaded_file, caption='アップロードされた画像', use_container_width=True)
+
+        if st.button("画像をアップロードして解析"):
+            gcs_uri, gemini_result_text, analysis_result, status = None, "解析未実行", "不明", "Pending"
+            upload_timestamp = firestore.SERVER_TIMESTAMP
+
+            with st.spinner('処理中... (1/3 GCSアップロード > 2/3 Gemini解析 > 3/3 Firestore保存)'):
+                try:
+                    # 1. GCS Upload
+                    st.write("1/3: GCS に画像をアップロード中...")
+                    file_extension = os.path.splitext(uploaded_file.name)[1]
+                    mime_type = uploaded_file.type
+                    destination_blob_name = f"uploads/{uuid.uuid4()}{file_extension}"
+                    blob = bucket.blob(destination_blob_name)
+                    uploaded_file.seek(0)
+                    blob.upload_from_file(uploaded_file, content_type=mime_type)
+                    gcs_uri = f"gs://{BUCKET_NAME}/{destination_blob_name}"
+                    st.write(f"GCS アップロード完了: {gcs_uri}")
+
+                    # 2. Gemini Analysis
+                    st.write("2/3: Gemini で画像を分析中...")
+                    image_part = Part.from_uri(gcs_uri, mime_type=mime_type)
+                    # ★★★ プロンプトを自由に調整 ★★★
+                    prompt = """
+                    この画像に写っているバイクのメーカー、型式名を特定してください。
+                    バイク以外、または型式が不明な場合は、その旨を記載してください。
+                    回答はメーカーと型式名のみ、または不明である旨のみを簡潔に記述してください。
+                    例: ヤマハ　YZF-R1, ヤマハ　VMAX, ヤマハ SR400, 不明, バイクではない
+                    """
+                    generation_config = generative_models.GenerationConfig(temperature=0.4, max_output_tokens=200)
+
+                    response = model.generate_content(
+                        [image_part, prompt], generation_config=generation_config, stream=False
+                    )
+
+                    if response.candidates and response.candidates[0].content.parts:
+                        gemini_result_text = response.text.strip()
+                        analysis_result = gemini_result_text; status = "Success"
+                        st.write("Gemini 解析完了")
+                    else:
+                        gemini_result_text = "Gemini 解析失敗 (空またはブロックされた応答)"
+                        try: block_reason = response.candidates[0].finish_reason; safety_ratings = response.candidates[0].safety_ratings
+                        except Exception: pass
+                        status = "Gemini API Error"; st.warning(gemini_result_text)
+
+                    st.subheader("Gemini 分析結果:")
+                    st.markdown(f"```\n{analysis_result}\n```")
+
+                    # 3. Firestore Write
+                    st.write("3/3: 解析履歴を Firestore に保存中...")
+                    doc_ref = db.collection("image_analysis_history").document() # ★★★ コレクション名 ★★★
+                    data_to_save = {
+                        "timestamp": upload_timestamp, "gcs_uri": gcs_uri, "original_filename": uploaded_file.name,
+                        "content_type": mime_type, "gemini_model_used": used_model_name, "gemini_result_text": gemini_result_text,
+                        "analysis_result": analysis_result, "status": status,
+                    }
+                    doc_ref.set(data_to_save)
+                    st.success(f"Firestore に履歴を保存しました (Doc ID: {doc_ref.id})")
+
+                except Exception as e:
+                    status = "Processing Error"; error_message = f"処理中にエラー: {str(e)}"
+                    st.error(error_message); st.exception(e)
+                    # エラー時の記録 (オプション)
+                    # ...
 
     # --- 解析履歴表示セクション ---
     st.divider()
