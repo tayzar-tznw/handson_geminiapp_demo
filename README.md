@@ -42,19 +42,6 @@
 
 * 1〜2 時間
 
-## 必要なもの
-
-* **Google Cloud プロジェクト:** 課金が有効になっていること。
-* **IAM 権限:** プロジェクト内で各種リソースを作成・管理できる権限 (オーナーまたは編集者ロール推奨)。詳細は[参考: 必要な IAM ロール](#参考-必要な-iam-ロール)セクションを参照。
-* **有効化済みの API:** ハンズオンを開始する前に、Google Cloud Console で以下の API が**有効になっていること**を確認してください。
-    1.  `Compute Engine API` (`compute.googleapis.com`)
-    2.  `Cloud Storage API` (`storage.googleapis.com`)
-    3.  `Cloud Run Admin API` (`run.googleapis.com`)
-    4.  `Vertex AI API` (`aiplatform.googleapis.com`)
-    5.  `Firestore API` (`firestore.googleapis.com`)
-    6.  `Cloud Build API` (`cloudbuild.googleapis.com`) (Cloud Run のソースデプロイが内部で使用するため)
-* **`gcloud` コマンドラインツール:** Cloud Workstations 内で利用可能です。
-
 ---
 
 ## モジュール 1: 開発環境のセットアップ Cloud Shell Editor
@@ -109,7 +96,7 @@
 
         st.title("画像分析アプリ (v0.1)")
         st.header("Hello, Google Cloud!")
-        st.write("Cloud Workstations で開発中！")
+        st.write("Cloud Shell Editor で開発中！")
         ```
 
 6.  **動作確認 (ローカル実行):**
@@ -216,7 +203,7 @@
 
 ## モジュール 4: アプリの Cloud Run へのデプロイ (ソースコードから)
 
-作成したアプリを、Cloud Workstations 上のソースコードから直接 Cloud Run にデプロイします。
+作成したアプリを、Cloud Shell Editor 上のソースコードから直接 Cloud Run にデプロイします。
 **(前提: Cloud Run Admin API が有効であること)**
 
 1.  Dockerfile というファイルを作成し、次のソースコードを記述します:
@@ -544,8 +531,7 @@ Firestore に保存した履歴と、対応する画像をアプリ内に表示�
 1.  **Cloud Run サービスの削除:** Google Cloud Console で [Cloud Run] -> サービス選択 -> 削除。
 2.  **Cloud Storage バケットの削除:** [Cloud Storage] -> バケット選択 -> 削除。
 3.  **Firestore データの削除:** [Firestore] -> データ -> コレクション選択 -> 削除。
-4.  **Cloud Workstations の停止・削除:** [Cloud Workstations] -> ワークステーション選択 -> 停止/削除、及び [ワークステーション構成] -> 構成選択 -> 削除。
-5.  **(Cloud Run ソースデプロイで裏で作成されたリソース):** [Container Registry] / [Artifact Registry] / [Cloud Build] ページで不要なイメージやビルド履歴を確認・削除。
+4.  **(Cloud Run ソースデプロイで裏で作成されたリソース):** [Container Registry] / [Artifact Registry] / [Cloud Build] ページで不要なイメージやビルド履歴を確認・削除。
 
 ---
 
