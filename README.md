@@ -120,8 +120,10 @@
 1.  **GCS バケットの作成:** 画像を保存する場所を作成します。
     * ナビゲーションメニューから [Cloud Storage] > [バケット] を選択します。
     * [作成] をクリックします。
+    * <img width="1029" alt="スクリーンショット 2025-04-22 9 51 36" src="https://github.com/user-attachments/assets/c62f3313-290a-4a24-892f-030a51a0e66c" />
     * **名前:** **世界中で一意 (ユニーク)** な名前 (例: `your-project-id-image-bucket`) を入力。 **`your-project-id-image-bucket` を実際に使うバケット名に置き換えてください。**
-    * リージョン、アクセス制御 (均一)、公開アクセス禁止などを設定し、作成します。
+    * <img width="376" alt="スクリーンショット 2025-04-22 9 51 45" src="https://github.com/user-attachments/assets/13af987e-ebd2-4ff8-ae6a-b1f256b920e3" />
+    * 設定はそのままで作成します。
 
 2.  **必要なライブラリのインストール:**
     ```bash
@@ -413,7 +415,10 @@ Gemini の分析結果を含む処理履歴を Firestore データベースに�
 
 1.  **Firestore データベースの作成:**
     * 初めて Firestore を使う場合、Google Cloud Console の [Firestore] ページで [データベースの作成] を行い、**Native モード** と **ロケーション** を選択します。まだ作成していない場合はここで作成してください。(データベースID は自分の名前を含むIDを指定してください。 ###YOUR_NAME_DB###)
+    * <img width="1019" alt="スクリーンショット 2025-04-22 9 51 52" src="https://github.com/user-attachments/assets/73992a70-03cb-4fc8-b3a6-be3a75e1b828" />
+    * <img width="411" alt="スクリーンショット 2025-04-22 9 52 01" src="https://github.com/user-attachments/assets/2fd38c72-c01a-4ac7-97de-75aaf2917d18" />
     * コレクションID は **image_analysis_history** で作成してください。
+    * 
   
 2. **app.py の修正**
     * app.py の YOUR_NAME_DB を今作成したdatabase id に変更してください
