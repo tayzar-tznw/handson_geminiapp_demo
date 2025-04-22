@@ -418,7 +418,10 @@ Gemini の分析結果を含む処理履歴を Firestore データベースに�
     * <img width="1019" alt="スクリーンショット 2025-04-22 9 51 52" src="https://github.com/user-attachments/assets/73992a70-03cb-4fc8-b3a6-be3a75e1b828" />
     * <img width="411" alt="スクリーンショット 2025-04-22 9 52 01" src="https://github.com/user-attachments/assets/2fd38c72-c01a-4ac7-97de-75aaf2917d18" />
     * コレクションID は **image_analysis_history** で作成してください。
-    * 
+    * <img width="606" alt="スクリーンショット 2025-04-22 9 57 12" src="https://github.com/user-attachments/assets/2cd3ce52-827e-4a64-b919-be3d94636236" />
+    * <img width="492" alt="スクリーンショット 2025-04-22 9 57 23" src="https://github.com/user-attachments/assets/d23dea84-e49a-4b8b-9a55-4df26cae835e" />
+
+
   
 2. **app.py の修正**
     * app.py の YOUR_NAME_DB を今作成したdatabase id に変更してください
