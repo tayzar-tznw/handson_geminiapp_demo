@@ -63,8 +63,8 @@
 シンプルな Web アプリを作成します。
 
 1.  **必要なツールの確認とインストール:**
-    * ターミナルを開きます (VS Code の場合: [Terminal] > [New Terminal])。
-    * Python 仮想環境ツール `venv` が必要です。なければインストールします:
+    * ターミナルを開きます ([Terminal] > [New Terminal])。
+    * Python 仮想環境ツール `venv` が必要です。インストールします:
         ```bash
         sudo apt update
         sudo apt install python3-venv -y
@@ -295,7 +295,7 @@
     PROJECT_ID = "your-project-id"
     BUCKET_NAME = "your-project-id-image-bucket"
     VERTEX_AI_LOCATION = "us-central1"
-    FIRESTORE_DATABASE_ID = "###YOUR_NAME_DB###"
+    FIRESTORE_DATABASE_ID = "###YOUR_NAME_DB###"   # モジュール6 で設定するため今はこのままで大丈夫
 
     if not PROJECT_ID or not BUCKET_NAME or not VERTEX_AI_LOCATION:
         st.error("環境変数 (GOOGLE_CLOUD_PROJECT, BUCKET_NAME, VERTEX_AI_LOCATION) が不足しています。")
