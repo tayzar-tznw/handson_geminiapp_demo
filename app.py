@@ -24,12 +24,10 @@ except ImportError:
 # --- 設定 ---
 # Google Cloud プロジェクト ID を環境変数から取得（推奨）
 # または直接記述（テスト目的）
-# PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-PROJECT_ID = "your-project-id" # あなたのプロジェクト ID に置き換えてください
-# GCS バケット名を設定
-BUCKET_NAME = "your-bucket" # 作成したバケット名に置き換えてください
-# Vertex AI Location を設定
-VERTEX_AI_LOCATION = os.getenv("VERTEX_AI_LOCATION", "us-central1") # デフォルトを設定
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "your-project-id") # デフォルトを設定
+BUCKET_NAME = os.getenv("BUCKET_NAME", "your-bucket")
+FIRESTORE_DATABASE_ID = os.getenv("FIRESTORE_DATABASE_ID", "your-database-id")
+VERTEX_AI_LOCATION = os.getenv("VERTEX_AI_LOCATION", "us-central1") 
 
 # --- Vertex AI / Firestore クライアントの初期化 ---
 try:
@@ -40,7 +38,7 @@ try:
 
     # Firestore Client (次のステップで使うがここで初期化)
     from google.cloud import firestore
-    db = firestore.Client(project=PROJECT_ID)
+    db = firestore.Client(project=PROJECT_ID, database=FIRESTORE_DATABASE_ID)
 
 except Exception as e:
     st.error(f"Vertex AI または Firestore クライアントの初期化に失敗: {e}")
