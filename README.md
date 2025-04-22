@@ -296,7 +296,6 @@
     PROJECT_ID = "your-project-id"
     BUCKET_NAME = "your-project-id-image-bucket"
     VERTEX_AI_LOCATION = "us-central1"
-    FIRESTORE_DATABASE_ID = "###YOUR_NAME_DB###"   # モジュール6 で設定するため今はこのままで大丈夫
 
     if not PROJECT_ID or not BUCKET_NAME or not VERTEX_AI_LOCATION:
         st.error("環境変数 (GOOGLE_CLOUD_PROJECT, BUCKET_NAME, VERTEX_AI_LOCATION) が不足しています。")
@@ -307,7 +306,6 @@
         vertexai.init(project=PROJECT_ID, location=VERTEX_AI_LOCATION)
         used_model_name="gemini-2.0-flash-001"
         model = GenerativeModel(used_model_name)
-        db = firestore.Client(project=PROJECT_ID, database=FIRESTORE_DATABASE_ID)
         storage_client = storage.Client(project=PROJECT_ID)
         bucket = storage_client.bucket(BUCKET_NAME)
     except Exception as e:
@@ -367,17 +365,6 @@
 
                     st.subheader("Gemini 分析結果:")
                     st.markdown(f"```\n{analysis_result}\n```")
-
-                    # 3. Firestore Write
-                    st.write("3/3: 解析履歴を Firestore に保存中...")
-                    doc_ref = db.collection("image_analysis_history").document() # ★★★ コレクション名 ★★★
-                    data_to_save = {
-                        "timestamp": upload_timestamp, "gcs_uri": gcs_uri, "original_filename": uploaded_file.name,
-                        "content_type": mime_type, "gemini_model_used": used_model_name, "gemini_result_text": gemini_result_text,
-                        "analysis_result": analysis_result, "status": status,
-                    }
-                    doc_ref.set(data_to_save)
-                    st.success(f"Firestore に履歴を保存しました (Doc ID: {doc_ref.id})")
 
                 except Exception as e:
                     status = "Processing Error"; error_message = f"処理中にエラー: {str(e)}"
